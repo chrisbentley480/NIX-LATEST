@@ -1,0 +1,32 @@
+{
+  "name": "nix-remastered",
+  "version": "1.0.0",
+  "description": "Recreating old site with node",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chrisbentley480/Nix-Remastered.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/chrisbentley480/Nix-Remastered/issues"
+  },
+  "homepage": "https://github.com/chrisbentley480/Nix-Remastered#readme",
+  "dependencies": {
+    "body-parser": "^1.19.0",
+    "crypto": "^1.0.1",
+    "express": "^4.17.1",
+    "express-rate-limit": "^5.5.1",
+    "jsonwebtoken": "^8.5.1",
+    "mssql": "^6.3.1",
+    "mysql": "^2.18.1",
+    "node-cron": "^3.0.0",
+    "node-rsa": "^1.1.1",
+    "socket.io": "^4.1.3"
+  }
+}
