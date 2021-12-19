@@ -312,10 +312,12 @@ app.post('/fetchMeta', function(req, res){
 	var username = hashable_sha256_strip(req.body.user);
 	var token = req.body.token;
 	if (token_authenticate(token,username)){
+		console.log('onto reading file '+username);
 		var usb_obj=JSON.parse(read_file(user_Folder,username));
 		response.response=usb_obj.meta;
 		res.send(response);
 	}else{
+		console.log('token failure for user:'+username);
 		response.response=0;
 		res.send(response);
 	}
