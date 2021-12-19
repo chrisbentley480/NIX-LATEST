@@ -91,7 +91,7 @@ function hashable_sha256(string){
 
 
 function write_file(fs_folder, fs_name, fs_content) {
-	fs.writeFileSync(fs_folder + "/" + fs_name, fs_content, function(err) {
+	fs.writeFileSync(fs_folder + "/" + String(fs_name), fs_content, function(err) {
 		if(err) console.log(err);
 	});
 }
