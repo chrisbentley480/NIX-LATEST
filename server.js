@@ -42,15 +42,21 @@ const options = {
 
 key.setOptions(options);
 
-// Static Files
+//	Maximum file size to be uploaded
+var file_payload_limit='5mb';
+
+//	Static Files
 app.use(express.static('public'));
 
-// parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: false }))
+//	parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({
+	extended: false
+}));
 
-// parse application/json
-app.use(bodyParser.json())
-
+//	Set body parser use - along with size limit
+app.use(bodyParser.json({
+	limit: file_payload_limit
+}));
 // Serve html
 app.get('', (req, res) => {
     res.sendFile(__dirname + '/public/html/title.html')
@@ -376,8 +382,11 @@ app.post('/postMessage', function(req, res){
 		}
 		var index_init={"head":0,"tail":-50,"state":0,"id":msg_dir};
 		if (!fileExists(conversation,'conversation.indx')){
-			var migration_init={};
 			write_file(conversation,'conversation.indx',JSON.stringify(index_init));
+		}
+		if (!fileExists(conversation,'key.ring')){
+			var ring = req.body.ring;
+			write_file(conversation,'key.ring',JSON.stringify(ring));
 		}
 		var convo_index=JSON.parse(read_file(conversation,'conversation.indx'));
 		write_file(conversation,convo_index.head,msg);
@@ -448,11 +457,54 @@ app.post('/fetch_conversation', function(req, res){
 	}).catch(function(error){console.log('prematuresend');res.send(response);});
 });
 
+function is_in_range(lower,upper,max,range,item){
+	var problem=upper-range;
+	if (item>=problem&&item<=upper){
+			return true;
+		}
+	if (problem<0){
+		problem+=max;
+		if (item>problem){
+			return true;
+		}
+	}
+	return false;
+}
+
+app.post('/fetch_conversation_range', function(req, res){
+	var response = {};
+	var members = hashable_sha256(String(req.body.members));
+	var range=req.body.range;
+	console.log(String(req.body.members));
+	var conversation = conversations_Folder+'/'+members;
+	var convo_index=JSON.parse(read_file(conversation,'conversation.indx'));
+	
+	
+	console.log('opening convo: '+conversation);
+	(async () => {
+	  for await (const f of getFiles(conversation)) {
+		  //console.log(f);
+		  var shortf=f.split('\\').pop().split('/').pop();
+		  console.log(shortf);
+		  if (is_in_range(convo_index.tail,convo_index.head,50,range,parseInt(shortf))||shortf=='conversation.indx'||shortf=='key.ring'){
+		  console.log('processing msgdata: '+f);
+		 response[f.split(/(\\|\/)/g).pop()]=fs.readFileSync(f,
+            {encoding:'utf8', flag:'r'});
+		  }
+	  }
+	})().then(function(a){
+		sleep(1000).then(() => { // there is a much better way of doing this but i dont wanna rewrite it rn
+		console.log('packed: '+response['0']);
+		res.send(response);
+		});
+	}).catch(function(error){console.log('prematuresend');res.send(response);});
+});
+
 //UPDATED 
 app.post('/fetch_conversation_index', function(req, res){
 	var response = {};
 	var id = req.body.id;
-	console.log(id);
+	//console.log(id);
 	if (fileExists(conversations_Folder+'/'+id,'conversation.indx')){
 		var file_obj=JSON.parse(read_file(conversations_Folder+'/'+id,'conversation.indx'));
 		response.index=file_obj;

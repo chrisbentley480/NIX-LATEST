@@ -231,6 +231,8 @@ function generateKeys(){
 			console.log("RSA SEED: " +rsaSeed);
 		}
 		rsa.generate(key_size,"10001",rsaSeed);
+		sessionStorage.setItem("private_exponent",rsa.d);
+		sessionStorage.setItem("public_exponent",rsa.n);
 		if (debug){
 			console.info((rsa.n.toString(16)));
 			console.info(linebrk(rsa.d.toString(16),64));

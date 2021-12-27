@@ -307,7 +307,7 @@ function savePreference(){
 	// To print or store the binary data, you may convert it to hex
 	var encryptedHex = aesjs.utils.hex.fromBytes(encryptedBytes);
 	let final_meta=rsa.encrypt(array.toString())+"<-|BEGIN AES|->"+encryptedHex;
-	console.log(contacts);
+	//console.log(contacts);
 	var data = {};
 	data.user = username;	
 	data.token=localStorage.getItem("token");
@@ -332,7 +332,7 @@ function savePreference(){
     });
 }
 
-
+/*
 //Post a new message
 function sendMessage(){
 	//GET Text
@@ -396,6 +396,199 @@ function sendMessage(){
 			alert("Could not reach server - if you are using a custom endpoint please make sure it is correct");
         },
     });
+}*/
+//Post a new message
+function sendMessage(){
+	//GET Text
+	var data = {};
+	data.token=localStorage.getItem("token");
+	
+	var keyring;
+	var aes_key;
+	
+	if (conversation_names[friend]==null&&convo_key==null){
+		var new_aes
+		
+		var array = new Uint8Array(16);
+	
+		window.crypto.getRandomValues(array);
+		
+		aes_key=array;		
+		var new_ring={};
+		signing_rsa.setPublic(contact_keys[recipients[0]],'10001');
+		new_ring[friend]=signing_rsa.encrypt(array.toString());
+		//rsa.setPublic(sessionStorage.getItem("public_exponent"),'10001');
+		new_ring[username]=rsa.encrypt(array.toString());
+		//console.log('adding  hash '+sha256(new_ring[friend])+' to hash '+sha256(new_ring[username]));
+		var hashed_cheap=sha256(String(parseInt(sha256(new_ring[friend]),16)+parseInt(sha256(new_ring[username]),16)));
+		console.log('hash cheap:'+hashed_cheap);
+		var to_en=parseBigInt(hashed_cheap,16);
+		//console.log('sig before made: '+to_en.toString(16));
+		//var my_d=rsa.d;
+		//var my_n=rsa.n;
+		//console.log('d before made: '+my_d);
+		//console.log('n before made: '+my_n);
+		//to_en=to_en.modPowInt(my_d,my_n);
+		new_ring.signature=rsa.doPrivate(to_en).toString(16);
+		//console.log('sig being made: '+new_ring.signature);
+		//new_ring.signature=signing_rsa.encrypt(array.toString());
+		
+		
+		new_ring.signed=username;
+		keyring=new_ring;
+		
+		
+	}else{
+		console.log("KEYRING ALREADY RECORDED _ SKIPPING CREATION");
+		aes_key=convo_key;
+	}
+	
+	var newMsg={};
+	newMsg.msg=$('#textAreaSend').val();
+	newMsg.from=username;
+	newMsg.to=friend;
+	newMsg.timestamp=new Date();
+	console.log('composing message: \n'+JSON.stringify(newMsg));
+	$('#textAreaSend').val('');
+	var textBytes = aesjs.utils.utf8.toBytes(JSON.stringify(newMsg));
+	// The counter is optional, and if omitted will begin at 1
+	var aesCtr = new aesjs.ModeOfOperation.ctr(aes_key, new aesjs.Counter(5));
+	var encryptedBytes = aesCtr.encrypt(textBytes);
+	// To print or store the binary data, you may convert it to hex
+	var encryptedHex = aesjs.utils.hex.fromBytes(encryptedBytes);
+	
+	var msg_complete={};
+	msg_complete.payload=hexToBase64(encryptedHex);
+	
+	if (conversation_names[friend]==null){
+		data.ring=keyring;
+	}
+	
+	data.msg=JSON.stringify(msg_complete);
+	data.to=friend;
+	data.from=username;
+	
+	//post to server
+	$.ajax({
+		type: 'POST',
+		data: JSON.stringify(data),
+		contentType: 'application/json',
+        url: '/postMessage',						
+        success: function(data) {
+				var response=parseInt(data.response);
+				if (debug){
+					console.log('success');
+					convo_key=aes_key;
+				}
+				if (!response){
+				}else{
+					//User exists
+					
+
+				}
+            },
+		error: function() {
+			alert("Could not reach server - if you are using a custom endpoint please make sure it is correct");
+        },
+    });
+}
+
+function sendMessage_img(imgdata){
+		//GET Text
+	var data = {};
+	data.token=localStorage.getItem("token");
+	
+	var keyring;
+	var aes_key;
+	
+	if (conversation_names[friend]==null&&convo_key==null){
+		var new_aes
+		
+		var array = new Uint8Array(16);
+	
+		window.crypto.getRandomValues(array);
+		
+		aes_key=array;		
+		var new_ring={};
+		signing_rsa.setPublic(contact_keys[recipients[0]],'10001');
+		new_ring[friend]=signing_rsa.encrypt(array.toString());
+		//rsa.setPublic(sessionStorage.getItem("public_exponent"),'10001');
+		new_ring[username]=rsa.encrypt(array.toString());
+		//console.log('adding  hash '+sha256(new_ring[friend])+' to hash '+sha256(new_ring[username]));
+		var hashed_cheap=sha256(String(parseInt(sha256(new_ring[friend]),16)+parseInt(sha256(new_ring[username]),16)));
+		console.log('hash cheap:'+hashed_cheap);
+		var to_en=parseBigInt(hashed_cheap,16);
+		//console.log('sig before made: '+to_en.toString(16));
+		//var my_d=rsa.d;
+		//var my_n=rsa.n;
+		//console.log('d before made: '+my_d);
+		//console.log('n before made: '+my_n);
+		//to_en=to_en.modPowInt(my_d,my_n);
+		new_ring.signature=rsa.doPrivate(to_en).toString(16);
+		//console.log('sig being made: '+new_ring.signature);
+		//new_ring.signature=signing_rsa.encrypt(array.toString());
+		
+		
+		new_ring.signed=username;
+		keyring=new_ring;
+		
+		
+	}else{
+		console.log("KEYRING ALREADY RECORDED _ SKIPPING CREATION");
+		aes_key=convo_key;
+	}
+	
+	var newMsg={};
+	newMsg.msg=imgdata;
+	newMsg.from=username;
+	newMsg.to=friend;
+	newMsg.type=1;
+	newMsg.timestamp=new Date();
+	console.log('composing message: \n'+JSON.stringify(newMsg));
+	$('#textAreaSend').val('');
+	var textBytes = aesjs.utils.utf8.toBytes(JSON.stringify(newMsg));
+	// The counter is optional, and if omitted will begin at 1
+	var aesCtr = new aesjs.ModeOfOperation.ctr(aes_key, new aesjs.Counter(5));
+	var encryptedBytes = aesCtr.encrypt(textBytes);
+	// To print or store the binary data, you may convert it to hex
+	var encryptedHex = aesjs.utils.hex.fromBytes(encryptedBytes);
+	
+	var msg_complete={};
+	msg_complete.payload=hexToBase64(encryptedHex);
+	
+	if (conversation_names[friend]==null){
+		data.ring=keyring;
+	}
+	
+	data.msg=JSON.stringify(msg_complete);
+	data.to=friend;
+	data.from=username;
+	
+	//post to server
+	$.ajax({
+		type: 'POST',
+		data: JSON.stringify(data),
+		contentType: 'application/json',
+        url: '/postMessage',						
+        success: function(data) {
+				var response=parseInt(data.response);
+				if (debug){
+					console.log('success');
+					convo_key=aes_key;
+				}
+				if (!response){
+				}else{
+					//User exists
+					
+
+				}
+            },
+		error: function() {
+			alert("Could not reach server - if you are using a custom endpoint please make sure it is correct");
+        },
+    });
+	
+	
 }
 
 function loadConnections(){
@@ -472,7 +665,7 @@ function loadConversation(members){
         url: '/fetch_conversation',						
         success: function(data) {
 			if (!running_convo){
-				setTimeout(function(){ loadConversation_index() }, 1000);
+				//setTimeout(function(){ loadConversation_index() }, 1000);
 				running_convo=true;
 			}
 				load_conversation_page(data);
@@ -485,6 +678,8 @@ function loadConversation(members){
 
 function loadConversation_index(){
 	//GET Text
+	//console.log('loading convo index');
+	if (friend!=null){
 	var data = {};
 	data.id = conversation_ID;	
 	//post to server
@@ -495,23 +690,50 @@ function loadConversation_index(){
         url: '/fetch_conversation_index',						
         success: function(data) {
 			try{
-			console.log(data);
-			if (data.index.state>conversation_index.state){
+			//console.log(data);
+			//if (data.index.state>conversation_index.state){
+			if (conversation_index==null){
+				//console.log('attempting convo load');
 				loadConversation(parseInt(sha256(friend),16)+parseInt(sha256(username),16));
 				
+			}else if (data.index.state>conversation_index.state){
+				loadConversation_range((parseInt(sha256(friend),16)+parseInt(sha256(username),16)),data.index.state-conversation_index.state);
 			}
 			}catch(error){}
-			setTimeout(function(){ loadConversation_index() }, 1000);
+		//	setTimeout(function(){ loadConversation_index() }, 1000);
             },
 		error: function() {
 			//alert("Could not reach server - if you are using a custom endpoint please make sure it is correct");
-			setTimeout(function(){ loadConversation_index() }, 1000);
+		//	setTimeout(function(){ loadConversation_index() }, 1000);
         },
     });
+	}
 }
 
-function loadConversation_range(members){
-	
+function loadConversation_range(members,range){
+	console.log('RUNNING PARTIAL LOAD');
+		//GET Text
+	var data = {};
+	data.members = members;	
+	data.range=range;
+	//post to server
+	$.ajax({
+		type: 'POST',
+		data: JSON.stringify(data),
+		contentType: 'application/json',
+        url: '/fetch_conversation_range',						
+        success: function(data) {
+			//if (!running_convo){
+				//setTimeout(function(){ loadConversation_index() }, 1000);
+			//	running_convo=true;
+			//}
+			
+				load_conversation_partial(data,range);
+            },
+		error: function() {
+			alert("Could not reach server - if you are using a custom endpoint please make sure it is correct");
+        },
+    });
 	
 	
 }

@@ -17,10 +17,16 @@ function base64ToHex(str) {
   }
   return result.toLowerCase();
 }
+function strip_string(string){
+	return string.toLowerCase().replace(/\s+/g, '').replace(/\./g, "");
+}
 const hexToB64 = hex => btoa(String.fromCharCode(...Array.apply(null, Array(hex.length / 2)).map((_,i) => parseInt(hex[i*2] + hex[i*2+1],16))));
 const fromHexString = hexString => new Uint8Array(hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
 function sha256_64(string){
 	return hexToBase64(sha256(string));
+}
+const escapeHtml = (unsafe) => {
+    return unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
 }
 /*Hash-function*/
 //Murmur hash 3 - non cryptographic (reversible)

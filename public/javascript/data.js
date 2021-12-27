@@ -23,7 +23,9 @@ var signing_rsa;
 //Custom configuration variables
 var key_size=2048;//2048,3072,4096
 
-//Experimental cookie system
+
+var conversation_names={};
+var convo_key;
 var REALcookie="";
 var conversation_ID;
 var conversation;
